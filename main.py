@@ -89,24 +89,42 @@ class Main:
         self.IsEditor = False
         self.IsLevels = False
         self.IsInGame = False
+        self.Win = False
+        self.EditorHelp = False
         
 
         #LOAD IMAGES
         img_starUI = pygame.image.load('ASSET/UI/star.png')
         img_nostarUI = pygame.image.load('ASSET/UI/blackstar.png')
 
-        img_logo = pygame.image.load('ASSET/UI/logo.png')
-        img_menubg = pygame.image.load('ASSET/UI/menuscreen.png')
 
-        img_play = pygame.image.load('ASSET/UI/playb.png')
-        img_editor = pygame.image.load('ASSET/UI/editorb.png')
-        img_exit = pygame.image.load('ASSET/UI/exitb.png')
+        img_menubg = pygame.image.load('ASSET/UI/baldjumpermainmenu.png')
+        img_levelbg = pygame.image.load('ASSET/UI/levelbg.png')
+        img_winscreen = pygame.image.load('ASSET/UI/winscreen.png')
+
+        img_play = pygame.image.load('ASSET/UI/UIplay.png')
+        img_editor = pygame.image.load('ASSET/UI/UIeditor.png')
+        img_exit = pygame.image.load('ASSET/UI/UIexit.png')
+        img_menub = pygame.image.load('ASSET/UI/menub.png')
+
+        img_editortab = pygame.image.load('ASSET/UI/items.png')
+        img_editorhelp = pygame.image.load('ASSET/UI/help.png')
+        img_editorinfo = pygame.image.load('ASSET/UI/info.png')
 
         img_map1 = pygame.image.load('ASSET/UI/map1.png')
         img_map2 = pygame.image.load('ASSET/UI/map2.png')
+        img_map3 = pygame.image.load('ASSET/UI/map3.png')   
+        img_lvl1 = pygame.image.load('ASSET/UI/level1.png')
+        img_lvl2 = pygame.image.load('ASSET/UI/level2.png')
+        img_lvl3 = pygame.image.load('ASSET/UI/level3.png')
 
-        self.menulogo = UIElement(125, 50, img_logo, 1)
-        self.menuscreen = UIElement(0, 0, img_menubg, 2)
+        self.editortab = UIElement(1220, 0, img_editortab, 0.5)
+        self.editorhelp = UIElement(0, 0, img_editorhelp, 0.3)
+        self.editorinfo = UIElement(0, 690, img_editorinfo, 0.6)
+
+        self.menuscreen = UIElement(0, 0, img_menubg, 0.66667)
+        self.levelscreen = UIElement(0, 0, img_levelbg, 0.66667)
+        self.winscreen = UIElement(0, 0, img_winscreen, 1.6)
 
         self.starUI = UIElement(1050, 650, img_starUI, 2)
         self.nostarUI = UIElement(1050, 650, img_nostarUI, 2)
@@ -115,23 +133,47 @@ class Main:
         self.starUI3 = UIElement(1200, 650, img_starUI, 2)
         self.nostarUI3 = UIElement(1200, 650, img_nostarUI, 2)
 
-        self.menuplay = Button(520, 300, img_play, 0.5)
-        self.menueditor = Button(520, 420, img_editor, 0.5)
-        self.menuexit = Button(520, 540, img_exit, 0.5)
+        self.WinstarUI = UIElement(400, 300, img_starUI, 5)
+        self.WinnostarUI = UIElement(400, 300, img_nostarUI, 5)
+        self.WinstarUI2 = UIElement(555, 250, img_starUI, 5)
+        self.WinnostarUI2 = UIElement(555, 250, img_nostarUI, 5)
+        self.WinstarUI3 = UIElement(700, 300, img_starUI, 5)
+        self.WinnostarUI3 = UIElement(700, 300, img_nostarUI, 5)
 
-        self.map1 = Button(50, 50, img_map1, 0.5)
-        self.map2 = Button(500, 340, img_map2, 0.5)
+        self.menuplay = Button(920, 350, img_play, 0.3)
+        self.menueditor = Button(970, 440, img_editor, 0.3)
+        self.menuexit = Button(1020, 535, img_exit, 0.3)
+        self.menubutton = Button(560, 535, img_menub, 0.3)
+
+        self.map1 = Button(90, 50, img_map1, 0.5)
+        self.map2 = Button(520, 220, img_map2, 0.5)
+        self.map3 = Button(950, 50, img_map3, 0.4)
+        self.Level1UI = UIElement(80, 300, img_lvl1, 0.7)
+        self.Level2UI = UIElement(510, 480, img_lvl2, 0.7)
+        self.Level3UI = UIElement(940, 300, img_lvl3, 0.7)
 
 
-
-
+    def LoadMap(self, map):
+        with open(f"maps/map_{map}.txt", 'r', encoding="utf-8") as f: content = f.read()
+        chosenmap = ast.literal_eval(content)
+        self.map.load_from_list(chosenmap)
+        self.started = True
+        self.IsLevels = False
+        self.IsInGame = True
+        self.CurrentLevel = map
+        if map == 1:
+            self.last_clicked_button = self.map1
+        elif map == 2:
+            self.last_clicked_button = self.map2
+        elif map == 3:
+            self.last_clicked_button = self.map3
 
     def collides_with_tiles(self, rect):
         # return True if rect collides with any non-background tile
         for row in self.map.squares:
             for square in row:
 
-                if square.value != 0 and square.value != 53 and square.value != 54:
+                if square.value != 0 and square.value != 54:
                     tile_rect = pygame.Rect(square.col * GridSize, square.row * GridSize, GridSize, GridSize)
                     if rect.colliderect(tile_rect):
                         if square.value == 55:
@@ -143,6 +185,13 @@ class Main:
                                 self.Stars3 += 1
                             square.value = 0
                             self.AllStars = [self.Stars1, self.Stars2, self.Stars3]
+                            return True
+                        if square.value == 53:
+                            self.Win = True
+                            self.IsInGame = False
+                            self.last_clicked_button = None
+                            if self.AllStars[self.CurrentLevel - 1] < 3:
+                                self.AllStars[self.CurrentLevel - 1] = self.AllStars[self.CurrentLevel - 1]
                             return True
                         if not self.IsJumping and square.value != 7 and square.value != 8:
                             return True
@@ -165,19 +214,16 @@ class Main:
             jumpheight = 19
             multiplierheight = 1
             overwrite_mode = False
+            import_mode = False
             override_input = ""
+            import_input = ""
             IsGrounded = True
             
             while running:
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         running = False
-                    if event.type == pygame.K_TAB:
-                        self.last_clicked_button = None
-                        self.IsMainMenu = True
-                        self.IsEditor = False
-                        self.IsLevels = False
-                        self.IsInGame = False
+                    
                     if event.type == pygame.MOUSEBUTTONUP:
                         self.last_clicked_button = None
                     keys = pygame.key.get_pressed()
@@ -187,78 +233,118 @@ class Main:
                     if (keys[pygame.K_UP]) and IsGrounded == True:
                         self.IsJumping = True
 
-                    elif keys[pygame.K_LEFT]:
+                    if keys[pygame.K_LEFT]:
                     #    if keys[pygame.K_UP]:
                     #        self.IsJumping = True
                         self.player.dir = "left"
                     
-                    elif keys[pygame.K_RIGHT]:
+                    if keys[pygame.K_RIGHT]:
                     #    if keys[pygame.K_UP]:
                     #        self.IsJumping = True
                         self.player.dir = "right"
                         
-                    elif keys[pygame.K_DOWN]:
+                    if keys[pygame.K_DOWN]:
                         self.player.dir = "down"   
                     
-                    elif event.type == pygame.KEYDOWN and self.IsEditor:
-                        if pygame.K_0 <= event.key <= pygame.K_9 and self.IsEditor:
-                            active_tile = event.key - pygame.K_0
-                            print("Active tile:", active_tile)
-                        if event.key == pygame.K_r:
-                            active_tile = 55
-                            print("Active tile:", active_tile)
-                        if event.key == pygame.K_t:
-                            active_tile = 53
-                            print("Active tile:", active_tile)
-                        if event.key == pygame.K_e:
-                            active_tile = 54
-                            print("Active tile:", active_tile)
-                        if event.key == pygame.K_s and self.IsEditor:
-                            if self.map._IsValid():
-                                save_map(self.map.squares)
-                                print("Map saved!")
-                            
-                        if event.key == pygame.K_d and self.IsEditor:
-                            self.map.restore()
-                            self.map.draw(self.screen)
-                        if event.key == pygame.K_o:
-                            if self.map._IsValid():
-                                overwrite_mode = not overwrite_mode
-                                override_input = ""
-                                print("Override mode:", overwrite_mode)
-                            
-                            continue
-                        if overwrite_mode:
-                            if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
-                                if override_input.isdigit():
-                                    idx = int(override_input)
-                                    filename = os.path.join("maps", f"map_{idx}.txt")
-                                    if os.path.exists(filename):
-                                        save_map(self.map.squares, overwrite=idx)
-                                        print(f"Overwrote {filename}")
+                    if event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_l:
+                            self.last_clicked_button = None
+                            self.IsMainMenu = True
+                            self.IsEditor = False
+                            self.IsLevels = False
+                            self.IsInGame = False
+                            self.Win = False
+                        if self.IsEditor:
+                            if pygame.K_0 <= event.key <= pygame.K_9 and self.IsEditor:
+                                active_tile = event.key - pygame.K_0
+                                print("Active tile:", active_tile)
+                            if event.key == pygame.K_r:
+                                active_tile = 55
+                                print("Active tile:", active_tile)
+                            if event.key == pygame.K_t:
+                                active_tile = 53
+                                print("Active tile:", active_tile)
+                            if event.key == pygame.K_e:
+                                active_tile = 54
+                                print("Active tile:", active_tile)
+                            if event.key == pygame.K_s and self.IsEditor:
+                                if self.map._IsValid():
+                                    save_map(self.map.squares)
+                                    print("Map saved!")
+                                
+                            if event.key == pygame.K_d and self.IsEditor:
+                                self.map.restore()
+                                self.map.draw(self.screen)
+                            if event.key == pygame.K_h and self.IsEditor:
+                                self.EditorHelp = not self.EditorHelp
+                                print("Editor help:", self.EditorHelp)
+                                continue
+                            if event.key == pygame.K_o:
+                                if self.map._IsValid():
+                                    overwrite_mode = not overwrite_mode
+                                    override_input = ""
+                                    print("Override mode:", overwrite_mode)
+                                
+                                continue
+                            if overwrite_mode:
+                                if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                                    if override_input.isdigit():
+                                        idx = int(override_input)
+                                        filename = os.path.join("maps", f"map_{idx}.txt")
+                                        if os.path.exists(filename):
+                                            save_map(self.map.squares, overwrite=idx)
+                                            print(f"Overwrote {filename}")
+                                        else:
+                                            print(f"File {filename} not found — not overwritten")
                                     else:
-                                        print(f"File {filename} not found — not overwritten")
-                                else:
-                                    print("No number entered to override")
-                            elif event.key == pygame.K_BACKSPACE:
-                                override_input = override_input[:-1]
-                                print("Override input:", override_input)
-                            else:
-                                c = event.unicode
-                                if c.isdigit():
-                                    override_input += c
+                                        print("No number entered to override")
+                                elif event.key == pygame.K_BACKSPACE:
+                                    override_input = override_input[:-1]
                                     print("Override input:", override_input)
-                            continue
-                        
+                                else:
+                                    c = event.unicode
+                                    if c.isdigit():
+                                        override_input += c
+                                        print("Override input:", override_input)
+                                continue
+                            if event.key == pygame.K_i:
+                                import_mode = not import_mode
+                                import_input = ""
+                                print("Import mode:", import_mode)
+                                continue
+                            if import_mode:
+                                if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                                    if import_input.isdigit():
+                                        idx = int(import_input)
+                                        filename = os.path.join("maps", f"map_{idx}.txt")
+                                        if os.path.exists(filename):
+                                            with open(filename, 'r', encoding="utf-8") as f: content = f.read()
+                                            chosenmap = ast.literal_eval(content)
+                                            self.map.load_from_list(chosenmap)
+                                            print(f"Imported {filename}")
+                                            
+                                        else:
+                                            print(f"File {filename} not found — not imported")
+                                    else:
+                                        print("No number entered to import")
+                                elif event.key == pygame.K_BACKSPACE:
+                                    import_input = import_input[:-1]
+                                    print("Import input:", import_input)
+                                else:
+                                    c = event.unicode
+                                    if c.isdigit():
+                                        import_input += c
+                                        print("Import input:", import_input)
+                                continue
                         if event.key == pygame.K_UP and IsGrounded == True:
                             
                             # jump = 64px
                             self.IsJumping = True
                                         
 
-                    elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.type == pygame.MOUSEBUTTONDOWN:
                         mouse_down = True
-                    elif event.type == pygame.MOUSEBUTTONUP:
+                    if event.type == pygame.MOUSEBUTTONUP:
                         mouse_down = False
                     
                 #Kokoaikainen pudotus
@@ -304,12 +390,12 @@ class Main:
 
                 # Jatkuva liike
                 
-                if self.player.dir == "left":
+                if self.player.dir == "left" and not self.Win:
                     proposed_offdir = self.offdir - 2
                     candidate = pygame.Rect(self.base_x + proposed_offdir, self.base_y - self.offdiry, self.char_size, self.char_size)
                     if not self.collides_with_tiles(candidate):
                         self.offdir = proposed_offdir
-                if self.player.dir == "right":
+                if self.player.dir == "right" and not self.Win:
                     proposed_offdir = self.offdir + 2
                     candidate = pygame.Rect(self.base_x + proposed_offdir, self.base_y - self.offdiry, self.char_size, self.char_size)
                     if not self.collides_with_tiles(candidate):
@@ -353,25 +439,16 @@ class Main:
                         self.screen.blit(self.char_idle, (draw_x, draw_y))
                 
                 if self.map1.clicked and self.IsLevels and self.last_clicked_button != self.map1:
-                    with open("maps/map_1.txt", 'r', encoding="utf-8") as f: content = f.read()
-                    chosenmap = ast.literal_eval(content)
-                    self.map.load_from_list(chosenmap)
-                    self.started = True
-                    self.IsLevels = False
-                    self.IsInGame = True
-                    self.last_clicked_button = self.map1
-                    self.CurrentLevel = 1
-                    
+                    self.LoadMap(1)
                 if self.map2.clicked and self.IsLevels and self.last_clicked_button != self.map2:
-                    with open("maps/map_2.txt", 'r', encoding="utf-8") as f: content = f.read()
-                    chosenmap = ast.literal_eval(content)
-                    self.map.load_from_list(chosenmap)
-                    self.started = True
+                    self.LoadMap(2)
+                if self.map3.clicked and self.IsLevels and self.last_clicked_button != self.map3:
+                    self.LoadMap(3)
+                if self.menubutton.clicked and self.IsLevels and self.last_clicked_button != self.menubutton:
                     self.IsLevels = False
-                    self.IsInGame = True
-                    self.last_clicked_button = self.map2
-                    self.CurrentLevel = 2
-
+                    self.IsMainMenu = True
+                    self.Win = False
+                    self.last_clicked_button = self.menubutton
                 #LOAD UIS
                 if self.IsInGame:
                     self.nostarUI.draw(self.screen)
@@ -386,10 +463,8 @@ class Main:
                         self.starUI.draw(self.screen)
                     elif self.AllStars[self.CurrentLevel - 1] == 1:
                         self.starUI.draw(self.screen)
-                        
                 if self.IsMainMenu:
                     self.menuscreen.draw(self.screen)
-                    self.menulogo.draw(self.screen)
                     self.menuplay.draw(self.screen)
                     self.menueditor.draw(self.screen)
                     self.menuexit.draw(self.screen)
@@ -402,16 +477,43 @@ class Main:
                     self.IsEditor = True
                     self.IsMainMenu = False
                     self.last_clicked_button = self.menueditor
+
+                    self.map.restore()
+                    self.map.draw(self.screen)
                 
                 if self.menuexit.clicked and self.IsMainMenu and self.last_clicked_button != self.menuexit:
                     running = False
                     self.last_clicked_button = self.menuexit
-                
+                if self.IsEditor and self.EditorHelp:
+                    self.editortab.draw(self.screen)
+                    self.editorinfo.draw(self.screen)
+                    self.editorhelp.draw(self.screen)
+                elif self.IsEditor:
+                    self.editorhelp.draw(self.screen)
                 if self.IsLevels:
                     self.IsMainMenu = False
-                    self.menuscreen.draw(self.screen)
+                    self.levelscreen.draw(self.screen)
                     self.map1.draw(self.screen)
                     self.map2.draw(self.screen)
+                    self.map3.draw(self.screen)
+                    self.Level1UI.draw(self.screen)
+                    self.Level2UI.draw(self.screen)
+                    self.Level3UI.draw(self.screen)
+                if self.Win:
+                    self.winscreen.draw(self.screen)
+                    self.WinnostarUI3.draw(self.screen)
+                    self.WinnostarUI2.draw(self.screen)
+                    self.WinnostarUI.draw(self.screen)
+                    if self.AllStars[self.CurrentLevel - 1] == 3:
+                        self.WinstarUI3.draw(self.screen)
+                        self.WinstarUI2.draw(self.screen)
+                        self.WinstarUI.draw(self.screen)
+                    elif self.AllStars[self.CurrentLevel - 1] == 2:
+                        self.WinstarUI2.draw(self.screen)
+                        self.WinstarUI.draw(self.screen)
+                    elif self.AllStars[self.CurrentLevel - 1] == 1:
+                        self.WinstarUI.draw(self.screen)
+                    self.menubutton.draw(self.screen)
                 pygame.display.flip()
                 self.clock.tick(60)
 
